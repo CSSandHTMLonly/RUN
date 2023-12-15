@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Run!</title>
+  <style>
+    body {
+      margin: 0; user-select: none;
+      overflow: hidden;
+      background: dimgrey;
+      font-family: verdana;
+      padding-bottom: -3px;
+    }
+    #countdown {
+      position: fixed; background: rgba(0,0,0,0.33); color: white; font-weight: bold;
+      font-size: 1em; padding: 10px; box-shadow: -3px 3px 5px black;
+      top: 0px; right: 0px; z-index: 50; border-radius: 15px;
+    }
+
+    #player {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background-color: lime;
+      position: absolute;
+      transition: 0.3s linear; z-index: 3;
+    }
+    #player::before {
+      content: '';
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: blue;
+      position: absolute;
+      left: 7px; box-shadow: 22.5px 0 0 blue;
+      top: 10px; z-index: 6;
+    }
+    #player::after {
+      content: '';
+      width: 32px;
+      height: 4px;
+      border-radius: 5px;
+      background-color: blue;
+      position: absolute;
+      left: 7px;
+      top: 30px; z-index: 6;
+    }
+
+
+    .obstacle {
+      width: 50px;
+      height: 50px;
+      background-color: black;
+      box-shadow: 0 25px 0 rgba(255,255,255,0.3) inset, 25px 0 0 rgba(255,255,255,0.3) inset, 0 3px 5px black;
+      position: absolute;
+      z-index: 2;
+    }
+
+    #ai {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background-color: red;
+      position: absolute;
+      transition: 0.33s linear;
+      z-index: 4;
+    }
+    #ai::before {
+      content: '';
+      width: 15px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: white;
+      position: absolute;
+      left: 10px;
+      transform: rotate(45deg);
+      top: 18px; z-index: 6;
+    }
+    #ai::after {
+      content: '';
+      width: 15px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: white;
+      position: absolute;
+      left: 28px;
+      transform: rotate(-45deg);
+      top: 18px; z-index: 6;
+    }
+    #bot {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background-color: red;
+      position: absolute;
+      transition: 0.33s linear;
+      z-index: 4;
+    }
+    #bot::before {
+      content: '';
+      width: 15px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: white;
+      position: absolute;
+      left: 10px;
+      transform: rotate(45deg);
+      top: 18px; z-index: 6;
+    }
+    #bot::after {
+      content: '';
+      width: 15px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: white;
+      position: absolute;
+      left: 28px;
+      transform: rotate(-45deg);
+      top: 18px; z-index: 6;
+    }
+    #popup {
+      display: none;
+      position: fixed;
+      width: 100%; height: 100%;
+      padding-top: 20%;
+      background-color: black;
+      color: red;
+      z-index: 80;
+    } 
+    #wellDone {
+      display: none; z-index: 90;
+      position: fixed;
+      height: 100%;
+      width: 100%; padding-top: 40%;
+      background: black; color: white;
+      padding: 2em; font-size: 3em; font-weight: bold;
+      box-shadow: inset 0 0 10px 10px green;
+    }
+ .mouth {
+      position: absolute; top: 32px; left: 16px;
+      width: 20px;
+      height: 10px;
+      background-color: white;
+      border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+    }
+
+  </style>
+</head>
+<body>
+
+<div id="player"></div>
+<div id="ai"><div class="mouth"></div></div>
+<div id="bot"><div class="mouth"></div></div>
+<div id="popup"><h1><center>Game Over! You got caught!<center></h1></div>
+
+<script>
+  const player = document.getElementById('player');
+  const ai = document.getElementById('ai');
+  const bot = document.getElementById('bot');
+  const popup = document.getElementById('popup');
+  const step = 50;
+  let playerX = 0;
+  let playerY = 0;
+
+
+
+
+  function createObstacle() {
+    const obstacle = document.createElement('div');
+    obstacle.className = 'obstacle';
+
+    let obstacleX, obstacleY;
+
+
+    if (obstacles.length < 100) {
+      obstacleX = Math.floor(Math.random() * (window.innerWidth / step)) * step;
+      obstacleY = Math.floor(Math.random() * (window.innerHeight / step)) * step;
+    } else {
+
+      if (obstacles.length < 250) {
+
+        obstacleX = Math.floor(Math.random() * (window.innerWidth / step)) * step;
+        obstacleY = window.innerHeight - step;
+      } else {
+
+        obstacleX = window.innerWidth - step;
+        obstacleY = Math.floor(Math.random() * (window.innerHeight / step)) * step;
+      }
+    }
+
+    obstacle.style.left = `${obstacleX}px`;
+    obstacle.style.top = `${obstacleY}px`;
+
+    document.body.appendChild(obstacle);
+    return { x: obstacleX, y: obstacleY, element: obstacle };
+  }
+
+  const obstacles = [];
+  for (let i = 0; i < 350; i++) {
+    obstacles.push(createObstacle());
+  }
+
+
+
+
+let botX = Math.floor(Math.random() * (window.innerWidth / step)) * step;
+let botY = Math.floor(Math.random() * (window.innerHeight / step)) * step;
+
+bot.style.left = `${botX}px`;
+bot.style.top = `${botY}px`;
+
+function moveBot() {
+  const dx = playerX - botX;
+  const dy = playerY - botY;
+
+  if (Math.abs(dx) > 300 || Math.abs(dy) > 300) {
+
+    const randomDirection = Math.floor(Math.random() * 4); // 0: up, 1: left, 2: down, 3: right
+
+    switch (randomDirection) {
+      case 0:
+        botY = Math.max(botY - step, 0);
+        break;
+      case 1:
+        botX = Math.max(botX - step, 0);
+        break;
+      case 2:
+        botY = Math.min(botY + step, window.innerHeight - step);
+        break;
+      case 3:
+        botX = Math.min(botX + step, window.innerWidth - step);
+        break;
+    }
+  } else {
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+      botX += dx > 0 ? step : -step;
+    } else {
+      botY += dy > 0 ? step : -step;
+    }
+  }
+
+  const collidesWithObstacle = obstacles.some(obstacle => (
+    botX < obstacle.x + step &&
+    botX + step > obstacle.x &&
+    botY < obstacle.y + step &&
+    botY + step > obstacle.y
+  ));
+
+  if (collidesWithObstacle) {
+    // If the bot collides with an obstacle, try to find a clear path
+    const directions = [{ x: step, y: 0 }, { x: -step, y: 0 }, { x: 0, y: step }, { x: 0, y: -step }];
+
+    for (const dir of directions) {
+      const newX = botX + dir.x;
+      const newY = botY + dir.y;
+
+      if (!checkCollision(newX, newY)) {
+        botX = newX;
+        botY = newY;
+        break;
+      }
+    }
+  }
+
+  bot.style.left = `${botX}px`;
+  bot.style.top = `${botY}px`;
+
+  if (playerX < botX + step &&
+    playerX + step > botX &&
+    playerY < botY + step &&
+    playerY + step > botY) {
+    popup.style.display = 'block';
+  }
+}
+
+
+
+
+
+
+
+
+  let aiX = Math.floor(Math.random() * (window.innerWidth / step)) * step;
+  let aiY = Math.floor(Math.random() * (window.innerHeight / step)) * step;
+
+  ai.style.left = `${aiX}px`;
+  ai.style.top = `${aiY}px`;
+
+  function moveAI() {
+    const dx = playerX - aiX;
+    const dy = playerY - aiY;
+
+    if (Math.abs(dx) > 300 || Math.abs(dy) > 300) {
+
+      const randomDirection = Math.floor(Math.random() * 4); // 0: up, 1: left, 2: down, 3: right
+
+      switch (randomDirection) {
+        case 0:
+          aiY = Math.max(aiY - step, 0);
+          break;
+        case 1:
+          aiX = Math.max(aiX - step, 0);
+          break;
+        case 2:
+          aiY = Math.min(aiY + step, window.innerHeight - step);
+          break;
+        case 3:
+          aiX = Math.min(aiX + step, window.innerWidth - step);
+          break;
+      }
+    } else {
+
+      if (Math.abs(dx) > Math.abs(dy)) {
+        aiX += dx > 0 ? step : -step;
+      } else {
+        aiY += dy > 0 ? step : -step;
+      }
+    }
+
+
+    const collidesWithObstacle = obstacles.some(obstacle => (
+      aiX < obstacle.x + step &&
+      aiX + step > obstacle.x &&
+      aiY < obstacle.y + step &&
+      aiY + step > obstacle.y
+    ));
+
+    if (collidesWithObstacle) {
+      // If the AI collides with an obstacle, try to find a clear path
+      const directions = [{ x: step, y: 0 }, { x: -step, y: 0 }, { x: 0, y: step }, { x: 0, y: -step }];
+
+      for (const dir of directions) {
+        const newX = aiX + dir.x;
+        const newY = aiY + dir.y;
+
+        if (!checkCollision(newX, newY)) {
+          aiX = newX;
+          aiY = newY;
+          break;
+        }
+      }
+    }
+
+    ai.style.left = `${aiX}px`;
+    ai.style.top = `${aiY}px`;
+
+
+    if (playerX < aiX + step &&
+      playerX + step > aiX &&
+      playerY < aiY + step &&
+      playerY + step > aiY) {
+      popup.style.display = 'block';
+    }
+  }
+
+
+
+
+
+  function checkCollision(x, y) {
+
+    return obstacles.some(obstacle => (
+      x < obstacle.x + step &&
+      x + step > obstacle.x &&
+      y < obstacle.y + step &&
+      y + step > obstacle.y
+    ));
+  }
+
+  window.addEventListener('keydown', (event) => {
+    let newPlayerX = playerX;
+    let newPlayerY = playerY;
+
+    switch (event.key) {
+      case 'w':
+        newPlayerY = Math.max(playerY - step, 0);
+        break;
+      case 'a':
+        newPlayerX = Math.max(playerX - step, 0);
+        break;
+      case 's':
+        newPlayerY = Math.min(playerY + step, window.innerHeight - step);
+        break;
+      case 'd':
+        newPlayerX = Math.min(playerX + step, window.innerWidth - step);
+        break;
+    }
+
+
+    if (!checkCollision(newPlayerX, newPlayerY)) {
+      playerX = newPlayerX;
+      playerY = newPlayerY;
+    }
+
+    player.style.left = `${playerX}px`;
+    player.style.top = `${playerY}px`;
+
+ 
+  });
+
+  setInterval(() => {
+    moveAI();
+  }, 333);
+  setInterval(() => {
+    moveBot();
+  }, 333);
+
+
+</script>
+
+<center><div id="wellDone">
+<h1>Well Done!</h1>
+<p>You have survived!!</p>
+</div></center>
+
+<div id="countdown"></div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+
+    let countdownTime = 5 * 60;
+
+
+    const countdownDiv = document.getElementById("countdown");
+    const wellDoneDiv = document.getElementById("wellDone");
+
+
+    function updateCountdown() {
+      const minutes = Math.floor(countdownTime / 60);
+      const seconds = countdownTime % 60;
+
+      countdownDiv.textContent = `Time left: ${minutes}:${seconds}`;
+
+      if (countdownTime <= 0) {
+        wellDoneDiv.style.display = "block";
+        clearInterval(countdownInterval);
+      } else {
+        countdownTime--;
+      }
+    }
+    updateCountdown();
+
+    const countdownInterval = setInterval(updateCountdown, 1000);
+  });
+</script>
+
+
+</body>
+</html>
