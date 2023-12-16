@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-<head>
+<head><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Run!</title>
   <style>
     body {
@@ -142,6 +142,17 @@
       background-color: white;
       border-radius: 50% 50% 0 0 / 100% 100% 0 0;
     }
+.control-board > button {display:  none;}
+@media (max-width: 799px) {
+    .control-board > button {
+      width: 70px; display: block;
+      height: 70px; bottom: 5px;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid green;
+      font-size: 2em;
+      position: fixed; color: white; z-index: 9;
+    }
+}
 
   </style>
 </head>
@@ -152,7 +163,17 @@
 <div id="bot"><div class="mouth"></div></div>
 <div id="popup"><h1><center>Game Over! You got caught!<center></h1></div>
 
+<div class="control-board">
+<button style="right:0px;" onclick="movePlayer('w')">⬆️</button>
+<button style="left:0px;" onclick="movePlayer('a')">⬅️</button>
+<button style="right:60px;" onclick="movePlayer('s')">⬇️</button>
+<button style="left:60px;" onclick="movePlayer('d')">➡️</button>
+</div>
+
 <script>
+
+
+
   const player = document.getElementById('player');
   const ai = document.getElementById('ai');
   const bot = document.getElementById('bot');
@@ -395,8 +416,37 @@ function moveBot() {
     player.style.left = `${playerX}px`;
     player.style.top = `${playerY}px`;
 
- 
+
   });
+
+  function movePlayer(direction) {
+    let newPlayerX = playerX;
+    let newPlayerY = playerY;
+
+    switch (direction) {
+      case 'w':
+        newPlayerY = Math.max(playerY - step, 0);
+        break;
+      case 'a':
+        newPlayerX = Math.max(playerX - step, 0);
+        break;
+      case 's':
+        newPlayerY = Math.min(playerY + step, window.innerHeight - step);
+        break;
+      case 'd':
+        newPlayerX = Math.min(playerX + step, window.innerWidth - step);
+        break;
+    }
+
+    // Check for collisions with obstacles
+    if (!checkCollision(newPlayerX, newPlayerY)) {
+      playerX = newPlayerX;
+      playerY = newPlayerY;
+    }
+
+    player.style.left = `${playerX}px`;
+    player.style.top = `${playerY}px`;
+  }
 
   setInterval(() => {
     moveAI();
